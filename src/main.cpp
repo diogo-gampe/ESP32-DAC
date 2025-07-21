@@ -9,7 +9,7 @@
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED; 
 
-volatile int adc_value = 0;
+volatile uint16_t adc_value = 0;
 volatile uint8_t dac_value = 0;
 
 volatile uint32_t start_isr, end_isr;
@@ -55,9 +55,7 @@ void IRAM_ATTR onTimer() {
 
 
   dacWrite(DAC_PIN, dac_value);
-  int raw = analogRead(ADC_PIN); // 0-4095
-  // Armazena para debug no loop()
-  adc_value = raw;
+  adc_value = analogRead(ADC_PIN); // 0-4095
 
   //armazena tempo ao final da interrupção
   end_isr = ESP.getCycleCount();
@@ -100,12 +98,11 @@ void loop() {
   static uint32_t last_print = 0;
   if (millis() - last_print > 500) {
     last_print = millis();
-    float vin = adc_value * 3.3 / 4095.0;
-    float vout = dac_value * 3.3 / 255.0;
+    
 
     elapsed_us = (float) elapsed/(CLOCK_FREQ_MHZ); // em microsegundos
     float time_isr = (float) isr_interval/(CLOCK_FREQ_MHZ*1000); // em milisegundos
-    Serial.printf("ADC: %.2f V\tDAC: %.2f V\t Tempo dentro de ISR: %.2f us\t Tempo entre ISRs(ms): %.2f\n", 
-                  vin, vout, elapsed_us, time_isr);
+    Serial.printf("ADC: %d \t DAC: %d \t Tempo dentro de ISR: %.2f us\t Tempo entre ISRs(ms): %.2f\n", 
+                  adc_value, dac_value, elapsed_us, time_isr);
   }
 }
